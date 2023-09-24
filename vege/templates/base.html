@@ -8,6 +8,24 @@
   </head>
   <body>
 
+    <nav class="navbar bg-info shadow-lg">
+      <div class="container-fluid">
+        <a class="navbar-brand">Navbar</a>
+        <form class="d-flex" role="search">
+
+          {% if request.user.is_authenticated %}
+          {% url "logout_page" as url %}
+          <a href="{{url}}" class="btn btn-success bg-secondary text-white" type="submit">Logout</a>
+
+          {% else %}
+          {% url "login_page" as url %}
+          <a href="{{url}}" class="btn btn-success bg-secondary text-white" type="submit">Login</a>
+
+          {% endif %}
+        </form>
+      </div>
+    </nav>
+
     
     {% block contant %}
     

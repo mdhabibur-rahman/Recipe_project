@@ -1,9 +1,13 @@
 from django.shortcuts import render,redirect
 from .models import *
 from django.contrib.auth.models import User
-
+from django.contrib import messages
+from django.contrib.auth import authenticate,login,logout
+from django.contrib.auth.decorators import login_required
 # Create your views here.
-def home(request):
+
+@login_required(login_url="/")
+def recipes(request):
     if request.method == "POST":
         data = request.POST
 
@@ -21,7 +25,7 @@ def home(request):
              recipe_image =recipe_image ,
         )
 
-        return redirect ('/')
+        return redirect ('/recipes/')
     
     queryset = Recipe.objects.all() 
 
@@ -40,7 +44,7 @@ def home(request):
 def delete_recipe(request,id):
     queryset = Recipe.objects.get(id = id)
     queryset.delete()
-    return redirect ('/')
+    return redirect ('/recipes/')
 
 def update_recipe(request,id):
     queryset = Recipe.objects.get(id = id)
@@ -60,14 +64,36 @@ def update_recipe(request,id):
 
         queryset.save()
 
-        return redirect ('/')
+        return redirect ('/recipes/')
 
     context = {"recipes" : queryset}
 
     return render(request,'update_recipe.html',context)
 
 def login_page(request):
+
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+
+        if not User.objects.filter(username = username).exists():
+            messages.error(request,'Invalid Username')
+            return redirect('/')
+        user = authenticate(username = username,password = password)
+
+        if user is None:
+            messages.error(request,'Invalid Password')
+            return redirect('/')
+        
+        else:
+            login(request,user)
+            return redirect('/recipes/')
+
     return render(request,'login.html')
+
+def logout_page(request):
+    logout(request)
+    return redirect('/')
 
 def register_page(request):
     if request.method == 'POST':
@@ -75,6 +101,11 @@ def register_page(request):
         last_name = request.POST.get('last_name')
         username = request.POST.get('username')
         password = request.POST.get('password')
+
+        user = User.objects.filter(username = username)
+        if user.exists():
+            messages.error(request, "This user name is already taken")
+            return redirect('/register/')
 
 
         user = User.objects.create(
@@ -85,7 +116,10 @@ def register_page(request):
         )
 
         user.set_password(password)
-        user.save()
+        user.save() 
+
+        messages.success(request, "Account created successfully")
+
         return redirect('/register/')
 
     return render(request,'register.html')
